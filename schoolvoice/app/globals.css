@@ -1,0 +1,305 @@
+@import "tailwindcss";
+
+/* ===================================================
+   CSS Custom Properties — Design Tokens
+   =================================================== */
+:root {
+  /* Dark theme (default) */
+  --bg: #080f0d;
+  --card: #0d1a16;
+  --card-hover: #112218;
+  --primary: #34d399;
+  --primary-fg: #ffffff;
+  --fg: #d1fae5;
+  --fg-dim: #a7f3d0;
+  --muted: #6b8f82;
+  --border: #1a3a2e;
+  --border-bright: #2a5a46;
+  --secondary: #122a22;
+  --destructive: #fb7185;
+  --radius: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  color-scheme: dark;
+}
+
+html.light {
+  /* Light theme */
+  --bg: #ffffff;
+  --card: #ffffff;
+  --card-hover: #f9fafb;
+  --primary: #000000;
+  --primary-fg: #ffffff;
+  --fg: #000000;
+  --fg-dim: #111827;
+  --muted: #6b7280;
+  --border: #000000;
+  --border-bright: #374151;
+  --secondary: #f5e6b3;
+  --destructive: #ef4444;
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 0.875rem;
+  color-scheme: light;
+}
+
+/* ===================================================
+   Tailwind v4 Theme Tokens
+   =================================================== */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ===================================================
+   Base Styles
+   =================================================== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===================================================
+   LIGHT MODE — Core Background Overrides
+   =================================================== */
+html.light .bg-\[\#080f0d\] { background-color: var(--bg) !important; }
+html.light .bg-\[\#0d1a16\] { background-color: var(--card) !important; }
+html.light .bg-\[\#122a22\] { background-color: var(--secondary) !important; }
+html.light .bg-\[\#112218\] { background-color: var(--card-hover) !important; }
+html.light .bg-\[\#1a3a2e\] { background-color: var(--secondary) !important; }
+
+/* Opacity backgrounds */
+html.light .bg-\[\#0d1a16\]\/80 { background-color: rgba(255,255,255,0.88) !important; }
+html.light .bg-\[\#0d1a16\]\/90 { background-color: rgba(255,255,255,0.92) !important; }
+html.light .bg-\[\#0d1a16\]\/95 { background-color: rgba(255,255,255,0.97) !important; }
+html.light .bg-\[\#112218\]\/80 { background-color: rgba(249,250,251,0.88) !important; }
+html.light .bg-\[\#122a22\]\/50 { background-color: rgba(245,230,179,0.5) !important; }
+
+/* LIGHT MODE — Border Overrides */
+html.light .border-\[\#1a3a2e\] { border-color: var(--border) !important; }
+html.light .border-\[\#2a5a46\] { border-color: var(--border-bright) !important; }
+
+/* LIGHT MODE — Text Color Overrides */
+html.light .text-\[\#d1fae5\] { color: var(--fg) !important; }
+html.light .text-\[\#a7f3d0\] { color: var(--fg-dim) !important; }
+html.light .text-\[\#6b8f82\] { color: var(--muted) !important; }
+html.light .text-\[\#d1fae5\]\/90 { color: rgba(0,0,0,0.9) !important; }
+html.light .text-\[\#6b8f82\]\/70 { color: rgba(107,114,128,0.7) !important; }
+html.light .text-\[\#6b8f82\]\/60 { color: rgba(107,114,128,0.6) !important; }
+
+/* LIGHT MODE — Primary Color (Emerald → Black) */
+html.light .bg-\[\#34d399\] { background-color: var(--primary) !important; }
+html.light .text-\[\#34d399\] { color: var(--primary) !important; }
+html.light .border-\[\#34d399\] { border-color: var(--primary) !important; }
+html.light .text-\[\#080f0d\] { color: var(--primary-fg) !important; }
+html.light .bg-\[\#10b981\] { background-color: #1f2937 !important; }
+html.light .text-\[\#10b981\] { color: #1f2937 !important; }
+html.light .from-\[\#34d399\] { --tw-gradient-from: #000000 !important; }
+html.light .to-\[\#059669\] { --tw-gradient-to: #1f2937 !important; }
+html.light .from-\[\#0d1a16\] { --tw-gradient-from: #f9fafb !important; }
+html.light .via-\[\#122a22\] { --tw-gradient-via: #f5e6b3 !important; }
+html.light .to-\[\#0d1a16\] { --tw-gradient-to: #f9fafb !important; }
+
+/* Primary opacity variants */
+html.light .bg-\[\#34d399\]\/5 { background-color: rgba(0,0,0,0.03) !important; }
+html.light .bg-\[\#34d399\]\/10 { background-color: rgba(0,0,0,0.06) !important; }
+html.light .bg-\[\#34d399\]\/15 { background-color: rgba(0,0,0,0.08) !important; }
+html.light .bg-\[\#34d399\]\/20 { background-color: rgba(0,0,0,0.10) !important; }
+html.light .border-\[\#34d399\]\/20 { border-color: rgba(0,0,0,0.20) !important; }
+html.light .border-\[\#34d399\]\/30 { border-color: rgba(0,0,0,0.30) !important; }
+html.light .border-\[\#34d399\]\/40 { border-color: rgba(0,0,0,0.40) !important; }
+html.light .border-\[\#34d399\]\/50 { border-color: rgba(0,0,0,0.50) !important; }
+html.light .border-\[\#34d399\]\/60 { border-color: rgba(0,0,0,0.60) !important; }
+
+/* LIGHT MODE — Hover Overrides */
+html.light .hover\:bg-\[\#122a22\]:hover { background-color: var(--secondary) !important; }
+html.light .hover\:bg-\[\#1a3a2e\]:hover { background-color: var(--secondary) !important; }
+html.light .hover\:bg-\[\#10b981\]:hover { background-color: #1f2937 !important; }
+html.light .hover\:bg-\[\#fb7185\]\/10:hover { background-color: rgba(239,68,68,0.1) !important; }
+html.light .hover\:bg-\[\#fb7185\]\/20:hover { background-color: rgba(239,68,68,0.15) !important; }
+html.light .hover\:bg-\[\#34d399\]\/10:hover { background-color: rgba(0,0,0,0.06) !important; }
+html.light .hover\:bg-\[\#34d399\]\/15:hover { background-color: rgba(0,0,0,0.08) !important; }
+html.light .hover\:border-\[\#2a5a46\]:hover { border-color: var(--border-bright) !important; }
+html.light .hover\:border-\[\#34d399\]\/50:hover { border-color: rgba(0,0,0,0.5) !important; }
+html.light .hover\:text-\[\#34d399\]:hover { color: var(--primary) !important; }
+html.light .hover\:text-\[\#10b981\]:hover { color: var(--primary) !important; }
+html.light .hover\:text-\[\#d1fae5\]:hover { color: var(--fg) !important; }
+
+/* LIGHT MODE — Glow Shadow → Subtle Shadow */
+html.light [class*="shadow-[0_0_20px_rgba(52"] { box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important; }
+html.light [class*="shadow-[0_0_16px_rgba(52"] { box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important; }
+html.light [class*="shadow-[0_0_24px_rgba(52"] { box-shadow: 0 2px 10px rgba(0,0,0,0.12) !important; }
+html.light [class*="shadow-[0_0_30px_rgba(52"] { box-shadow: 0 4px 12px rgba(0,0,0,0.10) !important; }
+html.light [class*="shadow-[0_0_40px_rgba(52"] { box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; }
+html.light [class*="shadow-[0_0_60px_rgba(52"] { box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important; }
+html.light [class*="shadow-[0_8px_32px"] { box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; }
+html.light [class*="shadow-[0_4px_24px"] { box-shadow: 0 2px 12px rgba(0,0,0,0.10) !important; }
+html.light [class*="shadow-[0_20px_60px"] { box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important; }
+html.light [class*="shadow-[0_0_20px_rgba(34"] { box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important; }
+html.light [class*="shadow-[0_0_20px_rgba(0"] { box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important; }
+html.light [class*="shadow-card"] { box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
+
+/* Hover shadow overrides in light mode */
+html.light [class*="hover:shadow-"]:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important; }
+
+/* LIGHT MODE — Destructive */
+html.light .bg-\[\#fb7185\]\/10 { background-color: rgba(239,68,68,0.1) !important; }
+html.light .border-\[\#fb7185\] { border-color: #ef4444 !important; }
+html.light .text-\[\#fb7185\] { color: #ef4444 !important; }
+html.light .bg-\[\#fb7185\]\/20 { background-color: rgba(239,68,68,0.15) !important; }
+html.light .border-\[\#fb7185\]\/20 { border-color: rgba(239,68,68,0.2) !important; }
+html.light .border-\[\#fb7185\]\/30 { border-color: rgba(239,68,68,0.3) !important; }
+
+/* LIGHT MODE — Navbar glassmorphism */
+html.light header {
+  background-color: rgba(255,255,255,0.88) !important;
+  border-bottom-color: #e5e7eb !important;
+}
+
+/* LIGHT MODE — Custom scrollbar */
+html.light::-webkit-scrollbar-track { background: #f9fafb; }
+html.light::-webkit-scrollbar-thumb { background: #d1d5db; }
+html.light::-webkit-scrollbar-thumb:hover { background: #374151; }
+
+/* LIGHT MODE — Font mono */
+html.light .font-mono { color: var(--fg) !important; }
+
+/* LIGHT MODE — textarea */
+html.light textarea {
+  background-color: var(--card) !important;
+  color: var(--fg) !important;
+  border-color: var(--border) !important;
+}
+html.light textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.2) !important;
+}
+html.light textarea:hover { border-color: var(--border-bright) !important; }
+
+/* LIGHT MODE — input overrides */
+html.light input {
+  background-color: var(--card) !important;
+  color: var(--fg) !important;
+  border-color: var(--border) !important;
+}
+html.light input::placeholder { color: var(--muted) !important; }
+html.light input:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 2px rgba(0,0,0,0.2) !important; }
+html.light input:hover { border-color: var(--border-bright) !important; }
+
+/* LIGHT MODE — date input fix */
+html.light input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+
+/* LIGHT MODE — glow-text → normal */
+html.light .glow-text { text-shadow: none !important; }
+
+/* ===================================================
+   Custom Scrollbar (dark default)
+   =================================================== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--card); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* ===================================================
+   Glassmorphism
+   =================================================== */
+.glass {
+  background: rgba(13, 26, 22, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+}
+html.light .glass {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* ===================================================
+   Scrollbar hide utility
+   =================================================== */
+.scrollbar-hide { scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ===================================================
+   Particle Canvas
+   =================================================== */
+#particle-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===================================================
+   Blob Animations
+   =================================================== */
+@keyframes blob-float {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+.blob-animate { animation: blob-float 10s ease-in-out infinite; }
+.blob-animate-delay-2 { animation: blob-float 12s ease-in-out infinite 2s; }
+.blob-animate-delay-4 { animation: blob-float 8s ease-in-out infinite 4s; }
+
+/* ===================================================
+   Glow Text (dark mode)
+   =================================================== */
+.glow-text { text-shadow: 0 0 20px rgba(52, 211, 153, 0.5); }
+
+/* ===================================================
+   Loading Skeleton
+   =================================================== */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+.skeleton {
+  background: var(--secondary);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: var(--radius);
+}
+
+/* ===================================================
+   Fade Up Animation
+   =================================================== */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fade-up 0.5s ease-out forwards; }
+
+/* ===================================================
+   Input Focus Ring
+   =================================================== */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.3);
+}
+html.light input:focus,
+html.light textarea:focus,
+html.light select:focus {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25);
+}
+
+/* ===================================================
+   Theme Transition (smooth)
+   =================================================== */
+*, *::before, *::after {
+  transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+}
+/* Exclude animation-sensitive elements */
+.animate-ping, .animate-spin, canvas {
+  transition: none !important;
+}
