@@ -23,7 +23,6 @@ import {
   Paperclip,
   Send,
   Tag,
-  UserX,
   X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -101,11 +100,16 @@ export default function PengaduanPage() {
     }
     setErrors({});
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
     try {
-      const complaint = addComplaint({ ...form, category: form.category as ComplaintCategory, attachments: files });
+      const complaint = await addComplaint({
+        ...form,
+        category: form.category as ComplaintCategory,
+        attachments: files,
+      });
       setSuccessTicket(complaint.ticketCode);
       addToast({ type: 'success', title: 'Laporan Terkirim!', message: `Kode tiket: ${complaint.ticketCode}` });
+    } catch {
+      addToast({ type: 'error', title: 'Gagal', message: 'Terjadi kesalahan. Coba lagi nanti.' });
     } finally {
       setLoading(false);
     }
@@ -118,6 +122,7 @@ export default function PengaduanPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // ── SUCCESS STATE ──────────────────────────────────────────
   if (successTicket) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 pt-20 pb-10">
@@ -156,11 +161,7 @@ export default function PengaduanPage() {
               <p className="text-xs text-[#6b8f82] mt-2">Simpan kode ini untuk melacak status laporan Anda</p>
             </div>
             <div className="flex gap-3">
-              <GlowButton
-                variant="outline"
-                fullWidth
-                onClick={() => router.push('/status')}
-              >
+              <GlowButton variant="outline" fullWidth onClick={() => router.push('/status')}>
                 Cek Status
               </GlowButton>
               <GlowButton
@@ -180,11 +181,12 @@ export default function PengaduanPage() {
     );
   }
 
+  // ── FORM ──────────────────────────────────────────────────
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
         <SectionHeader
-          label="Pengaduan Online"
+          label="Pengaduan Online — SMA N 1 Gringsing"
           title="Sampaikan Laporan Anda"
           subtitle="Isi formulir di bawah dengan lengkap dan jelas. Laporan akan diteruskan ke pihak sekolah yang bersangkutan."
         />
@@ -218,14 +220,16 @@ export default function PengaduanPage() {
                   <textarea
                     id="complaint-desc"
                     rows={5}
-                    placeholder="Ketik isi laporan Anda secara detail dan jelas. Sertakan informasi yang relevan seperti siapa, apa, kapan, di mana, dan bagaimana kejadiannya."
+                    placeholder="Ketik isi laporan secara detail — siapa, apa, kapan, di mana, dan bagaimana kejadiannya."
                     value={form.description}
-                    onChange={(e) => { set('description', e.target.value); }}
-                    className={`w-full rounded-xl border px-4 py-3 text-sm bg-[#0d1a16] text-[#d1fae5] placeholder:text-[#6b8f82] resize-none transition-all duration-200 hover:border-[#2a5a46] focus:border-[#34d399] ${errors.description ? 'border-[#fb7185]' : 'border-[#1a3a2e]'}`}
+                    onChange={(e) => set('description', e.target.value)}
+                    className={`w-full rounded-xl border px-4 py-3 text-sm bg-[#0d1a16] text-[#d1fae5] placeholder:text-[#6b8f82] resize-none transition-all duration-200 hover:border-[#2a5a46] focus:border-[#34d399] focus:outline-none ${errors.description ? 'border-[#fb7185]' : 'border-[#1a3a2e]'}`}
                   />
                   <div className="flex items-center justify-between">
                     {errors.description ? (
-                      <p className="text-xs text-[#fb7185] flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.description}</p>
+                      <p className="text-xs text-[#fb7185] flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" /> {errors.description}
+                      </p>
                     ) : (
                       <span />
                     )}
@@ -287,16 +291,23 @@ export default function PengaduanPage() {
                             key={school.id}
                             type="button"
                             onClick={() => { set('school', school.name); setShowSchools(false); }}
-                            className="flex items-center justify-between w-full px-4 py-2.5 text-sm text-[#d1fae5] hover:bg-[#122a22] hover:text-[#34d399] transition-colors text-left"
+                            className="flex items-center justify-between w-full px-4 py-3 text-sm text-[#d1fae5] hover:bg-[#122a22] hover:text-[#34d399] transition-colors text-left"
                           >
-                            <span>{school.name}</span>
-                            <span className="text-xs text-[#6b8f82] border border-[#1a3a2e] px-1.5 py-0.5 rounded">{school.type}</span>
+                            <div>
+                              <p className="font-medium">{school.name}</p>
+                              <p className="text-xs text-[#6b8f82] mt-0.5">{school.address}</p>
+                            </div>
+                            <span className="text-xs text-[#6b8f82] border border-[#1a3a2e] px-1.5 py-0.5 rounded ml-3 shrink-0">{school.type}</span>
                           </button>
                         ))}
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  {errors.school && <p className="text-xs text-[#fb7185] flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.school}</p>}
+                  {errors.school && (
+                    <p className="text-xs text-[#fb7185] flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> {errors.school}
+                    </p>
+                  )}
                 </div>
 
                 {/* Category dropdown */}
@@ -338,7 +349,11 @@ export default function PengaduanPage() {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  {errors.category && <p className="text-xs text-[#fb7185] flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.category}</p>}
+                  {errors.category && (
+                    <p className="text-xs text-[#fb7185] flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> {errors.category}
+                    </p>
+                  )}
                 </div>
 
                 {/* File Upload */}

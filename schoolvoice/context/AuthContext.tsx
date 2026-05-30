@@ -18,17 +18,30 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
+  // Restore session from localStorage on mount
   useEffect(() => {
-    // Simulate persisted session
-    const stored = localStorage.getItem('sv_user');
-    if (stored) setUser(JSON.parse(stored));
+    try {
+      const saved = localStorage.getItem('sv-user');
+      if (saved) setUser(JSON.parse(saved));
+    } catch {
+      // ignore
+    }
   }, []);
 
-  const login = useCallback(async (email: string, _password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     await new Promise((r) => setTimeout(r, 800));
-    if (email === dummyUser.email || email === 'demo@schoolvoice.id') {
-      setUser(dummyUser);
-      localStorage.setItem('sv_user', JSON.stringify(dummyUser));
+    // Demo: accept dummyUser email or any non-empty credentials
+    if (email === dummyUser.email || (email && password.length >= 6)) {
+      const loggedIn: User = email === dummyUser.email ? dummyUser : {
+        id: `usr-${Date.now()}`,
+        name: email.split('@')[0],
+        email,
+        phone: '',
+        role: 'Siswa',
+        createdAt: new Date().toISOString(),
+      };
+      setUser(loggedIn);
+      localStorage.setItem('sv-user', JSON.stringify(loggedIn));
       return true;
     }
     return false;
@@ -36,21 +49,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem('sv_user');
+    localStorage.removeItem('sv-user');
   }, []);
 
   const register = useCallback(async (data: Partial<User> & { password: string }): Promise<boolean> => {
     await new Promise((r) => setTimeout(r, 1000));
     const newUser: User = {
       id: `usr-${Date.now()}`,
-      name: data.name || '',
-      email: data.email || '',
-      phone: data.phone || '',
-      role: data.role || 'Siswa',
+      name: data.name ?? '',
+      email: data.email ?? '',
+      phone: data.phone ?? '',
+      role: data.role ?? 'Siswa',
       createdAt: new Date().toISOString(),
     };
     setUser(newUser);
-    localStorage.setItem('sv_user', JSON.stringify(newUser));
+    localStorage.setItem('sv-user', JSON.stringify(newUser));
     return true;
   }, []);
 
@@ -58,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, ...data };
-      localStorage.setItem('sv_user', JSON.stringify(updated));
+      localStorage.setItem('sv-user', JSON.stringify(updated));
       return updated;
     });
   }, []);

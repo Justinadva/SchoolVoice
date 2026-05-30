@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useState } from 'react';
 
 interface ComplaintContextType {
   complaints: Complaint[];
-  addComplaint: (data: ComplaintFormData) => Complaint;
+  addComplaint: (data: ComplaintFormData) => Promise<Complaint>;
   getComplaintByTicket: (code: string) => Complaint | undefined;
 }
 
@@ -15,9 +15,13 @@ const ComplaintContext = createContext<ComplaintContextType | null>(null);
 export function ComplaintProvider({ children }: { children: React.ReactNode }) {
   const [complaints, setComplaints] = useState<Complaint[]>(dummyComplaints);
 
-  const addComplaint = useCallback((data: ComplaintFormData): Complaint => {
+  const addComplaint = useCallback(async (data: ComplaintFormData): Promise<Complaint> => {
+    // Simulate network delay
+    await new Promise((r) => setTimeout(r, 900));
+
     const ticketCode = `SV-${new Date().getFullYear()}-${String(complaints.length + 1).padStart(3, '0')}`;
     const now = new Date().toISOString();
+
     const newComplaint: Complaint = {
       id: `cmp-${Date.now()}`,
       ticketCode,
@@ -56,6 +60,7 @@ export function ComplaintProvider({ children }: { children: React.ReactNode }) {
         },
       ],
     };
+
     setComplaints((prev) => [newComplaint, ...prev]);
     return newComplaint;
   }, [complaints.length]);
