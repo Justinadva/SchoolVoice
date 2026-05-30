@@ -1,4 +1,3 @@
-import { ComplaintStatus } from '@/types';
 import { format, formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 
@@ -30,24 +29,34 @@ export function formatRelativeTime(dateStr: string): string {
   }
 }
 
-export function getStatusLabel(status: ComplaintStatus): string {
-  const labels: Record<ComplaintStatus, string> = {
+export function getStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    // Supabase values (Indonesian capitalised)
+    Menunggu: 'Menunggu',
+    Diproses: 'Diproses',
+    Selesai: 'Selesai',
+    Ditolak: 'Ditolak',
+    // Legacy lowercase English
     pending: 'Menunggu',
     diproses: 'Diproses',
     selesai: 'Selesai',
     ditolak: 'Ditolak',
   };
-  return labels[status];
+  return labels[status] ?? labels[status?.toLowerCase()] ?? status ?? 'Tidak Diketahui';
 }
 
-export function getStatusColor(status: ComplaintStatus): string {
-  const colors: Record<ComplaintStatus, string> = {
+export function getStatusColor(status: string): string {
+  const colors: Record<string, string> = {
+    Menunggu: '#fbbf24',
+    Diproses: '#22d3ee',
+    Selesai: '#34d399',
+    Ditolak: '#fb7185',
     pending: '#fbbf24',
     diproses: '#22d3ee',
     selesai: '#34d399',
     ditolak: '#fb7185',
   };
-  return colors[status];
+  return colors[status] ?? colors[status?.toLowerCase()] ?? '#6b8f82';
 }
 
 export function truncate(str: string, maxLength: number): string {
