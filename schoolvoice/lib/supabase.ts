@@ -1,4 +1,6 @@
-// Supabase client placeholder.
-// Install '@supabase/supabase-js' and set NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY
-// to switch from dummy data to a real database.
-export const supabase = null as unknown as import('@supabase/supabase-js').SupabaseClient;
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);

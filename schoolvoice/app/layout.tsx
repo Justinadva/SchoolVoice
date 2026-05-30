@@ -32,10 +32,16 @@ export const metadata: Metadata = {
     'Sampaikan aspirasi, keluhan, kritik, dan saran Anda kepada pihak sekolah secara aman, mudah, dan transparan melalui SchoolVoice.',
   keywords: ['pengaduan sekolah', 'laporan siswa', 'platform sekolah', 'SchoolVoice', 'SMA N 1 Gringsing'],
   authors: [{ name: 'SchoolVoice Team' }],
+  manifest: '/manifest.json',
   openGraph: {
     title: 'SchoolVoice — Platform Pengaduan Sekolah',
     description: 'Sampaikan aspirasi dan keluhan Anda ke sekolah secara aman & mudah.',
     type: 'website',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'SchoolVoice',
   },
 };
 
