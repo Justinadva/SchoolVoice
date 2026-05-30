@@ -1,5 +1,4 @@
 import { AuthProvider } from '@/context/AuthContext';
-import { ComplaintProvider } from '@/context/ComplaintContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { Inter, Poppins } from 'next/font/google';
@@ -64,17 +63,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen antialiased">
         <ThemeProvider>
           <AuthProvider>
-            <ComplaintProvider>
-              <ToastProvider>
-                <ParticleBackground />
-                <GradientBlobs />
-                <div className="relative z-10">
-                  <Navbar />
-                  <main className="min-h-screen">{children}</main>
-                </div>
-                <ToastContainer />
-              </ToastProvider>
-            </ComplaintProvider>
+            <ToastProvider>
+              <ParticleBackground />
+              <GradientBlobs />
+              <div className="relative z-10">
+                <Navbar />
+                <main className="min-h-screen">{children}</main>
+              </div>
+              <ToastContainer />
+            </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

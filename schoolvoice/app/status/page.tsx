@@ -5,7 +5,7 @@ import GlowButton from '@/components/ui/GlowButton';
 import InputField from '@/components/ui/InputField';
 import SectionHeader from '@/components/ui/SectionHeader';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { useComplaint } from '@/context/ComplaintContext';
+import { supabase } from '@/lib/supabase';
 import { Complaint } from '@/types';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,7 +24,13 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-function TimelineStep({ label, date, description, completed, isLast }: {
+function TimelineStep({
+  label,
+  date,
+  description,
+  completed,
+  isLast,
+}: {
   label: string;
   date: string;
   description: string;
@@ -34,7 +40,13 @@ function TimelineStep({ label, date, description, completed, isLast }: {
   return (
     <div className="flex gap-4">
       <div className="flex flex-col items-center">
-        <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${completed ? 'border-[#34d399] bg-[#34d399]/20 text-[#34d399]' : 'border-[#1a3a2e] bg-[#122a22] text-[#6b8f82]'}`}>
+        <div
+          className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${
+            completed
+              ? 'border-[#34d399] bg-[#34d399]/20 text-[#34d399]'
+              : 'border-[#1a3a2e] bg-[#122a22] text-[#6b8f82]'
+          }`}
+        >
           {completed ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
         </div>
         {!isLast && (
@@ -52,11 +64,7 @@ function TimelineStep({ label, date, description, completed, isLast }: {
 
 function ComplaintDetail({ complaint }: { complaint: Complaint }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       <GlassCard glow padding="lg">
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-3 mb-6 pb-5 border-b border-[#1a3a2e]">
@@ -77,7 +85,7 @@ function ComplaintDetail({ complaint }: { complaint: Complaint }) {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Left - Details */}
+          {/* Left — Details */}
           <div className="space-y-4">
             <div>
               <p className="text-xs font-medium text-[#6b8f82] uppercase tracking-wider mb-2">Detail Pengaduan</p>
@@ -85,34 +93,20 @@ function ComplaintDetail({ complaint }: { complaint: Complaint }) {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-[#122a22] p-3">
-                <div className="flex items-center gap-1.5 text-[#6b8f82] mb-1">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span className="text-xs">Tanggal</span>
+              {[
+                { icon: Calendar, label: 'Tanggal', value: formatDate(complaint.date) },
+                { icon: Tag, label: 'Kategori', value: complaint.category },
+                { icon: MapPin, label: 'Lokasi', value: complaint.location },
+                { icon: Building2, label: 'Sekolah', value: complaint.school },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="rounded-lg bg-[#122a22] p-3">
+                  <div className="flex items-center gap-1.5 text-[#6b8f82] mb-1">
+                    <Icon className="h-3.5 w-3.5" />
+                    <span className="text-xs">{label}</span>
+                  </div>
+                  <p className="text-sm text-[#d1fae5] truncate">{value}</p>
                 </div>
-                <p className="text-sm text-[#d1fae5]">{formatDate(complaint.date)}</p>
-              </div>
-              <div className="rounded-lg bg-[#122a22] p-3">
-                <div className="flex items-center gap-1.5 text-[#6b8f82] mb-1">
-                  <Tag className="h-3.5 w-3.5" />
-                  <span className="text-xs">Kategori</span>
-                </div>
-                <p className="text-sm text-[#d1fae5]">{complaint.category}</p>
-              </div>
-              <div className="rounded-lg bg-[#122a22] p-3">
-                <div className="flex items-center gap-1.5 text-[#6b8f82] mb-1">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span className="text-xs">Lokasi</span>
-                </div>
-                <p className="text-sm text-[#d1fae5]">{complaint.location}</p>
-              </div>
-              <div className="rounded-lg bg-[#122a22] p-3">
-                <div className="flex items-center gap-1.5 text-[#6b8f82] mb-1">
-                  <Building2 className="h-3.5 w-3.5" />
-                  <span className="text-xs">Sekolah</span>
-                </div>
-                <p className="text-sm text-[#d1fae5] truncate">{complaint.school}</p>
-              </div>
+              ))}
             </div>
 
             {/* School response */}
@@ -139,21 +133,23 @@ function ComplaintDetail({ complaint }: { complaint: Complaint }) {
             )}
           </div>
 
-          {/* Right - Timeline */}
+          {/* Right — Timeline */}
           <div>
             <p className="text-xs font-medium text-[#6b8f82] uppercase tracking-wider mb-4">Timeline Progress</p>
-            <div>
-              {complaint.timeline.map((step, i) => (
+            {Array.isArray(complaint.timeline) && complaint.timeline.length > 0 ? (
+              complaint.timeline.map((step: any, i: number) => (
                 <TimelineStep
                   key={i}
                   label={step.label}
-                  date={step.date}
+                  date={step.date ?? ''}
                   description={step.description}
                   completed={step.completed}
                   isLast={i === complaint.timeline.length - 1}
                 />
-              ))}
-            </div>
+              ))
+            ) : (
+              <p className="text-sm text-[#6b8f82]">Belum ada timeline tersedia.</p>
+            )}
           </div>
         </div>
 
@@ -170,26 +166,61 @@ function ComplaintDetail({ complaint }: { complaint: Complaint }) {
   );
 }
 
+/** Map Supabase snake_case → Complaint camelCase */
+function mapRow(item: any): Complaint {
+  return {
+    id: item.id,
+    ticketCode: item.ticket_code,
+    title: item.title,
+    description: item.description,
+    date: item.date,
+    location: item.location,
+    school: item.school,
+    category: item.category,
+    status: item.status,
+    isAnonymous: item.is_anonymous,
+    response: item.response,
+    responseDate: item.response_date,
+    userId: item.user_id,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+    timeline: item.timeline ?? [],
+  };
+}
+
 export default function StatusPage() {
-  const { getComplaintByTicket } = useComplaint();
   const [ticketCode, setTicketCode] = useState('');
   const [searched, setSearched] = useState(false);
-  const [result, setResult] = useState<Complaint | null | undefined>(undefined);
+  const [result, setResult] = useState<Complaint | null>(null);
   const [loading, setLoading] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ticketCode.trim()) return;
+    const code = ticketCode.trim().toUpperCase();
+    if (!code) return;
+
     setLoading(true);
     setSearched(false);
-    await new Promise((r) => setTimeout(r, 600));
-    const found = getComplaintByTicket(ticketCode.trim().toUpperCase());
-    setResult(found ?? null);
+    setResult(null);
+    setNotFound(false);
+
+    const { data, error } = await supabase
+      .from('complaints')
+      .select('*')
+      .ilike('ticket_code', code)
+      .single();
+
+    if (error || !data) {
+      setResult(null);
+      setNotFound(true);
+    } else {
+      setResult(mapRow(data));
+    }
+
     setSearched(true);
     setLoading(false);
   };
-
-  const suggestions = ['SV-2024-001', 'SV-2024-002', 'SV-2024-003'];
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6">
@@ -201,19 +232,14 @@ export default function StatusPage() {
         />
 
         {/* Search form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mt-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-8">
           <GlassCard padding="lg">
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
                 <InputField
                   id="ticket-code-input"
                   type="text"
-                  placeholder="Contoh: SV-2024-001"
+                  placeholder="Contoh: SV-2026-1234"
                   value={ticketCode}
                   onChange={(e) => setTicketCode(e.target.value.toUpperCase())}
                   icon={<Ticket className="h-4 w-4" />}
@@ -223,21 +249,9 @@ export default function StatusPage() {
                 Cari Status
               </GlowButton>
             </form>
-
-            {/* Quick access suggestions */}
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-[#6b8f82]">Coba kode:</span>
-              {suggestions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setTicketCode(s)}
-                  className="text-xs font-mono text-[#34d399] border border-[#34d399]/20 bg-[#34d399]/5 hover:bg-[#34d399]/15 px-2 py-0.5 rounded transition-colors"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <p className="mt-3 text-xs text-[#6b8f82]">
+              Masukkan kode tiket yang Anda terima setelah mengirim laporan, contoh: <span className="font-mono text-[#34d399]">SV-2026-1234</span>
+            </p>
           </GlassCard>
         </motion.div>
 
@@ -247,7 +261,7 @@ export default function StatusPage() {
             <div className="mt-6">
               {result ? (
                 <ComplaintDetail complaint={result} />
-              ) : (
+              ) : notFound ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -267,7 +281,7 @@ export default function StatusPage() {
                     </div>
                   </GlassCard>
                 </motion.div>
-              )}
+              ) : null}
             </div>
           )}
         </AnimatePresence>

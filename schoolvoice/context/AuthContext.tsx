@@ -1,6 +1,5 @@
 'use client';
 
-import { dummyUser } from '@/data/dummy';
 import { User } from '@/types';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
@@ -30,9 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     await new Promise((r) => setTimeout(r, 800));
-    // Demo: accept dummyUser email or any non-empty credentials
-    if (email === dummyUser.email || (email && password.length >= 6)) {
-      const loggedIn: User = email === dummyUser.email ? dummyUser : {
+    if (email && password.length >= 6) {
+      const loggedIn: User = {
         id: `usr-${Date.now()}`,
         name: email.split('@')[0],
         email,

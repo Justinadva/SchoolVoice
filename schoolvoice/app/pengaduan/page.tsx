@@ -4,9 +4,8 @@ import GlassCard from '@/components/ui/GlassCard';
 import GlowButton from '@/components/ui/GlowButton';
 import InputField from '@/components/ui/InputField';
 import SectionHeader from '@/components/ui/SectionHeader';
-import { useComplaint } from '@/context/ComplaintContext';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/context/ToastContext';
-import { schools } from '@/data/dummy';
 import { ComplaintCategory } from '@/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -28,6 +27,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+const SCHOOL_NAME = 'SMA N 1 Gringsing';
+
 const categories: { value: ComplaintCategory; label: string; color: string }[] = [
   { value: 'Bullying', label: 'Bullying', color: '#fb7185' },
   { value: 'Fasilitas Sekolah', label: 'Fasilitas Sekolah', color: '#22d3ee' },
@@ -40,9 +41,14 @@ const categories: { value: ComplaintCategory; label: string; color: string }[] =
 
 type FormErrors = Partial<Record<string, string>>;
 
+function generateTicketCode() {
+  const year = new Date().getFullYear();
+  const rand = String(Math.floor(Math.random() * 9000) + 1000);
+  return `SV-${year}-${rand}`;
+}
+
 export default function PengaduanPage() {
   const router = useRouter();
-  const { addComplaint } = useComplaint();
   const { addToast } = useToast();
 
   const [form, setForm] = useState({
@@ -50,7 +56,6 @@ export default function PengaduanPage() {
     description: '',
     date: '',
     location: '',
-    school: '',
     category: '' as ComplaintCategory | '',
     isAnonymous: false,
   });
@@ -59,7 +64,6 @@ export default function PengaduanPage() {
   const [loading, setLoading] = useState(false);
   const [successTicket, setSuccessTicket] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [showSchools, setShowSchools] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
 
   const set = (key: keyof typeof form, value: string | boolean) => {
@@ -74,7 +78,6 @@ export default function PengaduanPage() {
     else if (form.description.trim().length < 30) errs.description = 'Deskripsi minimal 30 karakter';
     if (!form.date) errs.date = 'Tanggal kejadian wajib diisi';
     if (!form.location.trim()) errs.location = 'Lokasi kejadian wajib diisi';
-    if (!form.school) errs.school = 'Pilih instansi sekolah';
     if (!form.category) errs.category = 'Pilih kategori pengaduan';
     return errs;
   };
@@ -100,19 +103,58 @@ export default function PengaduanPage() {
     }
     setErrors({});
     setLoading(true);
-    try {
-      const complaint = await addComplaint({
-        ...form,
-        category: form.category as ComplaintCategory,
-        attachments: files,
-      });
-      setSuccessTicket(complaint.ticketCode);
-      addToast({ type: 'success', title: 'Laporan Terkirim!', message: `Kode tiket: ${complaint.ticketCode}` });
-    } catch {
-      addToast({ type: 'error', title: 'Gagal', message: 'Terjadi kesalahan. Coba lagi nanti.' });
-    } finally {
-      setLoading(false);
+
+    const ticketCode = generateTicketCode();
+    const now = new Date().toISOString();
+    const timeline = [
+      {
+        status: 'pending',
+        label: 'Laporan Diterima',
+        date: now,
+        description: 'Laporan Anda telah berhasil dikirim dan menunggu verifikasi.',
+        completed: true,
+      },
+      {
+        status: 'diproses',
+        label: 'Sedang Diproses',
+        date: '',
+        description: 'Laporan sedang ditangani pihak sekolah.',
+        completed: false,
+      },
+      {
+        status: 'selesai',
+        label: 'Selesai',
+        date: '',
+        description: 'Laporan telah diselesaikan.',
+        completed: false,
+      },
+    ];
+
+    const { error: sbError } = await supabase.from('complaints').insert([
+      {
+        ticket_code: ticketCode,
+        title: form.title,
+        description: form.description,
+        date: form.date,
+        location: form.location,
+        school: SCHOOL_NAME,
+        category: form.category,
+        status: 'Menunggu',
+        is_anonymous: form.isAnonymous,
+        timeline,
+      },
+    ]);
+
+    setLoading(false);
+
+    if (sbError) {
+      console.error('Insert error:', sbError);
+      addToast({ type: 'error', title: 'Gagal Mengirim', message: 'Terjadi kesalahan. Coba lagi nanti.' });
+      return;
     }
+
+    setSuccessTicket(ticketCode);
+    addToast({ type: 'success', title: 'Laporan Terkirim!', message: `Kode tiket: ${ticketCode}` });
   };
 
   const copyTicket = async () => {
@@ -122,15 +164,11 @@ export default function PengaduanPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // ── SUCCESS STATE ──────────────────────────────────────────
+  // ── SUCCESS STATE ──────────────────────────────────────────────────────
   if (successTicket) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 pt-20 pb-10">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md"
-        >
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
           <GlassCard glow padding="xl" className="text-center">
             <motion.div
               initial={{ scale: 0 }}
@@ -150,11 +188,7 @@ export default function PengaduanPage() {
               <p className="text-xs text-[#6b8f82] mb-1">Kode Tiket Pengaduan</p>
               <div className="flex items-center justify-center gap-3">
                 <p className="text-xl font-mono font-bold text-[#34d399]">{successTicket}</p>
-                <button
-                  onClick={copyTicket}
-                  className="text-[#6b8f82] hover:text-[#34d399] transition-colors"
-                  aria-label="Salin kode tiket"
-                >
+                <button onClick={copyTicket} className="text-[#6b8f82] hover:text-[#34d399] transition-colors" aria-label="Salin kode tiket">
                   {copied ? <CheckCircle2 className="h-4 w-4 text-[#34d399]" /> : <Copy className="h-4 w-4" />}
                 </button>
               </div>
@@ -168,7 +202,7 @@ export default function PengaduanPage() {
                 fullWidth
                 onClick={() => {
                   setSuccessTicket(null);
-                  setForm({ title: '', description: '', date: '', location: '', school: '', category: '', isAnonymous: false });
+                  setForm({ title: '', description: '', date: '', location: '', category: '', isAnonymous: false });
                   setFiles([]);
                 }}
               >
@@ -181,7 +215,7 @@ export default function PengaduanPage() {
     );
   }
 
-  // ── FORM ──────────────────────────────────────────────────
+  // ── FORM ─────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
@@ -191,15 +225,17 @@ export default function PengaduanPage() {
           subtitle="Isi formulir di bawah dengan lengkap dan jelas. Laporan akan diteruskan ke pihak sekolah yang bersangkutan."
         />
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="mt-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }} className="mt-8">
           <GlassCard glow padding="xl">
             <form onSubmit={handleSubmit} noValidate>
               <div className="space-y-5">
+                {/* Sekolah (fixed) */}
+                <div className="flex items-center gap-2 rounded-xl border border-[#1a3a2e] bg-[#122a22]/50 px-4 py-3 text-sm text-[#d1fae5]">
+                  <Building2 className="h-4 w-4 text-[#34d399] shrink-0" />
+                  <span className="font-medium">{SCHOOL_NAME}</span>
+                  <span className="ml-auto text-xs text-[#6b8f82] border border-[#1a3a2e] px-1.5 py-0.5 rounded">SMA</span>
+                </div>
+
                 {/* Judul */}
                 <InputField
                   id="complaint-title"
@@ -230,9 +266,7 @@ export default function PengaduanPage() {
                       <p className="text-xs text-[#fb7185] flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" /> {errors.description}
                       </p>
-                    ) : (
-                      <span />
-                    )}
+                    ) : <span />}
                     <span className={`text-xs ${form.description.length < 30 ? 'text-[#fb7185]' : 'text-[#6b8f82]'}`}>
                       {form.description.length}/30 min
                     </span>
@@ -263,60 +297,13 @@ export default function PengaduanPage() {
                   />
                 </div>
 
-                {/* School dropdown */}
-                <div className="flex flex-col gap-1.5 relative">
-                  <label className="text-sm font-medium text-[#d1fae5]">Pilih Instansi Sekolah</label>
-                  <button
-                    type="button"
-                    id="school-select-btn"
-                    onClick={() => { setShowSchools((v) => !v); setShowCategories(false); }}
-                    className={`flex items-center justify-between w-full h-11 rounded-xl border px-4 text-sm transition-all duration-200 hover:border-[#2a5a46] ${form.school ? 'text-[#d1fae5]' : 'text-[#6b8f82]'} bg-[#0d1a16] ${errors.school ? 'border-[#fb7185]' : 'border-[#1a3a2e]'} ${showSchools ? 'border-[#34d399]' : ''}`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-[#6b8f82]" />
-                      {form.school || 'Pilih Instansi Tujuan'}
-                    </span>
-                    <ChevronDown className={`h-4 w-4 text-[#6b8f82] transition-transform ${showSchools ? 'rotate-180' : ''}`} />
-                  </button>
-                  <AnimatePresence>
-                    {showSchools && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        className="absolute top-full mt-1 left-0 right-0 z-30 rounded-xl border border-[#1a3a2e] bg-[#0d1a16] shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden"
-                      >
-                        {schools.map((school) => (
-                          <button
-                            key={school.id}
-                            type="button"
-                            onClick={() => { set('school', school.name); setShowSchools(false); }}
-                            className="flex items-center justify-between w-full px-4 py-3 text-sm text-[#d1fae5] hover:bg-[#122a22] hover:text-[#34d399] transition-colors text-left"
-                          >
-                            <div>
-                              <p className="font-medium">{school.name}</p>
-                              <p className="text-xs text-[#6b8f82] mt-0.5">{school.address}</p>
-                            </div>
-                            <span className="text-xs text-[#6b8f82] border border-[#1a3a2e] px-1.5 py-0.5 rounded ml-3 shrink-0">{school.type}</span>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  {errors.school && (
-                    <p className="text-xs text-[#fb7185] flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" /> {errors.school}
-                    </p>
-                  )}
-                </div>
-
                 {/* Category dropdown */}
                 <div className="flex flex-col gap-1.5 relative">
                   <label className="text-sm font-medium text-[#d1fae5]">Pilih Kategori Pengaduan</label>
                   <button
                     type="button"
                     id="category-select-btn"
-                    onClick={() => { setShowCategories((v) => !v); setShowSchools(false); }}
+                    onClick={() => setShowCategories((v) => !v)}
                     className={`flex items-center justify-between w-full h-11 rounded-xl border px-4 text-sm transition-all duration-200 hover:border-[#2a5a46] ${form.category ? 'text-[#d1fae5]' : 'text-[#6b8f82]'} bg-[#0d1a16] ${errors.category ? 'border-[#fb7185]' : 'border-[#1a3a2e]'} ${showCategories ? 'border-[#34d399]' : ''}`}
                   >
                     <span className="flex items-center gap-2">
@@ -368,14 +355,7 @@ export default function PengaduanPage() {
                     <Paperclip className="h-6 w-6 text-[#6b8f82]" />
                     <span className="text-sm text-[#6b8f82]">Klik untuk unggah gambar atau PDF</span>
                     <span className="text-xs text-[#6b8f82]/70">PNG, JPG, PDF (maks 10MB per file)</span>
-                    <input
-                      id="complaint-files"
-                      type="file"
-                      multiple
-                      accept="image/*,.pdf"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
+                    <input id="complaint-files" type="file" multiple accept="image/*,.pdf" onChange={handleFileChange} className="hidden" />
                   </label>
                   {files.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-1">
@@ -396,11 +376,7 @@ export default function PengaduanPage() {
                 <div className="flex items-center justify-between rounded-xl border border-[#1a3a2e] bg-[#122a22]/50 p-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#34d399]/10 border border-[#34d399]/20">
-                      {form.isAnonymous ? (
-                        <EyeOff className="h-4 w-4 text-[#34d399]" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-[#6b8f82]" />
-                      )}
+                      {form.isAnonymous ? <EyeOff className="h-4 w-4 text-[#34d399]" /> : <Eye className="h-4 w-4 text-[#6b8f82]" />}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-[#d1fae5]">Kirim sebagai Anonim</p>
@@ -415,23 +391,13 @@ export default function PengaduanPage() {
                     aria-checked={form.isAnonymous}
                     role="switch"
                   >
-                    <span
-                      className={`inline-block h-4 w-4 rounded-full bg-white shadow-md transform transition-transform ${form.isAnonymous ? 'translate-x-6' : 'translate-x-1'}`}
-                    />
+                    <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-md transform transition-transform ${form.isAnonymous ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
                 </div>
 
                 {/* Submit */}
-                <GlowButton
-                  type="submit"
-                  fullWidth
-                  size="xl"
-                  loading={loading}
-                  icon={<Send className="h-5 w-5" />}
-                  iconPosition="right"
-                  className="mt-2"
-                >
-                  Kirim Pengaduan
+                <GlowButton type="submit" fullWidth size="xl" loading={loading} icon={<Send className="h-5 w-5" />} iconPosition="right" className="mt-2">
+                  Kirim Pengaduan ke Supabase
                 </GlowButton>
               </div>
             </form>

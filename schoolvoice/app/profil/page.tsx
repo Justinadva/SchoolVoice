@@ -5,8 +5,8 @@ import GlowButton from '@/components/ui/GlowButton';
 import InputField from '@/components/ui/InputField';
 import SectionHeader from '@/components/ui/SectionHeader';
 import { useAuth } from '@/context/AuthContext';
-import { useComplaint } from '@/context/ComplaintContext';
 import { useToast } from '@/context/ToastContext';
+import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/types';
 import { motion } from 'framer-motion';
 import {
@@ -28,13 +28,21 @@ import { useEffect, useState } from 'react';
 
 const roles: UserRole[] = ['Siswa', 'Orang Tua', 'Masyarakat Umum'];
 
+interface Stats {
+  total: number;
+  selesai: number;
+  diproses: number;
+  pending: number;
+  ditolak: number;
+}
+
 export default function ProfilPage() {
   const { user, isLoggedIn, updateProfile } = useAuth();
-  const { complaints } = useComplaint();
   const { addToast } = useToast();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', role: 'Siswa' as UserRole });
+  const [stats, setStats] = useState<Stats>({ total: 0, selesai: 0, diproses: 0, pending: 0, ditolak: 0 });
 
   useEffect(() => {
     if (user) {
@@ -42,14 +50,26 @@ export default function ProfilPage() {
     }
   }, [user]);
 
-  const userComplaints = complaints.filter((c) => c.userId === user?.id);
-  const stats = {
-    total: userComplaints.length,
-    selesai: userComplaints.filter((c) => c.status === 'selesai').length,
-    diproses: userComplaints.filter((c) => c.status === 'diproses').length,
-    pending: userComplaints.filter((c) => c.status === 'pending').length,
-    ditolak: userComplaints.filter((c) => c.status === 'ditolak').length,
-  };
+  // Load user-specific stats from Supabase
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { data } = await supabase
+        .from('complaints')
+        .select('status')
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        setStats({
+          total: data.length,
+          selesai: data.filter((c: any) => c.status === 'selesai').length,
+          diproses: data.filter((c: any) => c.status === 'diproses').length,
+          pending: data.filter((c: any) => c.status === 'pending' || c.status === 'Menunggu').length,
+          ditolak: data.filter((c: any) => c.status === 'ditolak').length,
+        });
+      }
+    };
+    fetchStats();
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -94,16 +114,15 @@ export default function ProfilPage() {
         />
 
         <div className="mt-8 grid lg:grid-cols-3 gap-6">
-          {/* Left - Avatar & Quick info */}
+          {/* Left - Avatar & Stats */}
           <div className="space-y-4">
-            {/* Avatar */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <GlassCard glow padding="lg" className="text-center">
                 <div className="relative inline-block mb-4">
-                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#34d399] to-[#059669] text-[#080f0d] text-3xl font-bold shadow-[0_0_30px_rgba(52,211,153,0.3)]" style={{ fontFamily: 'var(--font-poppins)' }}>
+                  <div
+                    className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#34d399] to-[#059669] text-[#080f0d] text-3xl font-bold shadow-[0_0_30px_rgba(52,211,153,0.3)]"
+                    style={{ fontFamily: 'var(--font-poppins)' }}
+                  >
                     {user?.name.charAt(0).toUpperCase()}
                   </div>
                   <button
@@ -123,12 +142,7 @@ export default function ProfilPage() {
               </GlassCard>
             </motion.div>
 
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <GlassCard padding="md">
                 <p className="text-xs font-semibold text-[#6b8f82] uppercase tracking-wider mb-3">Statistik Laporan</p>
                 <div className="space-y-2">
@@ -154,11 +168,7 @@ export default function ProfilPage() {
 
           {/* Right - Edit form */}
           <div className="lg:col-span-2">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
               <GlassCard glow padding="xl">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
@@ -166,22 +176,13 @@ export default function ProfilPage() {
                     <h3 className="text-base font-semibold text-[#d1fae5]">Informasi Akun</h3>
                   </div>
                   {!editing ? (
-                    <GlowButton
-                      variant="secondary"
-                      size="sm"
-                      icon={<Edit3 className="h-4 w-4" />}
-                      onClick={() => setEditing(true)}
-                    >
+                    <GlowButton variant="secondary" size="sm" icon={<Edit3 className="h-4 w-4" />} onClick={() => setEditing(true)}>
                       Edit Profil
                     </GlowButton>
                   ) : (
                     <div className="flex gap-2">
-                      <GlowButton variant="ghost" size="sm" onClick={handleCancel}>
-                        Batal
-                      </GlowButton>
-                      <GlowButton size="sm" icon={<Save className="h-4 w-4" />} loading={saving} onClick={handleSave}>
-                        Simpan
-                      </GlowButton>
+                      <GlowButton variant="ghost" size="sm" onClick={handleCancel}>Batal</GlowButton>
+                      <GlowButton size="sm" icon={<Save className="h-4 w-4" />} loading={saving} onClick={handleSave}>Simpan</GlowButton>
                     </div>
                   )}
                 </div>
@@ -251,14 +252,15 @@ export default function ProfilPage() {
                       <div className="flex justify-between">
                         <span className="text-[#6b8f82]">Bergabung</span>
                         <span className="text-[#d1fae5]">
-                          {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '-'}
+                          {user?.createdAt
+                            ? new Date(user.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
+                            : '-'}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-[#6b8f82]">Status Akun</span>
                         <span className="flex items-center gap-1 text-[#34d399]">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          Aktif
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Aktif
                         </span>
                       </div>
                     </div>
